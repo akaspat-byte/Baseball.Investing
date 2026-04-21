@@ -1,0 +1,365 @@
+/* =========================================================
+   Baseball Betting Analyzer — Dark Theme
+   ========================================================= */
+
+:root {
+  --bg:           #0d1117;
+  --bg-card:      #161b22;
+  --bg-raised:    #21262d;
+  --border:       #30363d;
+  --border-subtle:#21262d;
+  --text:         #e6edf3;
+  --text-muted:   #8b949e;
+  --text-faint:   #6e7681;
+  --accent:       #58a6ff;
+  --accent-dim:   #1f6feb;
+  --green:        #3fb950;
+  --green-dim:    #1a4f1e;
+  --yellow:       #d29922;
+  --yellow-dim:   #3d2d00;
+  --red:          #f85149;
+  --red-dim:      #4a1217;
+  --star:         #ffa657;
+  --radius:       8px;
+  --radius-lg:    12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===== Layout ===== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; }
+
+/* ===== Header ===== */
+.site-header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  margin-bottom: 24px;
+}
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-icon { font-size: 32px; line-height: 1; }
+.brand-title { font-size: 20px; font-weight: 700; color: var(--text); }
+.brand-sub { font-size: 12px; color: var(--text-muted); }
+.header-meta { font-size: 12px; color: var(--text-muted); text-align: right; line-height: 1.8; }
+
+/* ===== Card ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+/* ===== Controls ===== */
+.control-bar { margin-bottom: 24px; }
+.control-inputs { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 10px; }
+.input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 260px; }
+.input-group label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.input-group input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input-group input:focus { border-color: var(--accent); }
+.control-hint { font-size: 12px; color: var(--text-muted); }
+
+/* Buttons */
+.btn-primary, .btn-secondary {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  height: 36px;
+}
+.btn-primary  { background: var(--accent-dim); color: #fff; }
+.btn-primary:hover  { opacity: 0.85; }
+.btn-secondary { background: var(--bg-raised); color: var(--text-muted); border: 1px solid var(--border); }
+.btn-secondary:hover { color: var(--text); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Loading ===== */
+.loading-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Error ===== */
+.error-panel {
+  background: var(--red-dim);
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  color: var(--red);
+  margin-bottom: 20px;
+}
+
+/* ===== Summary bar ===== */
+.summary-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.summary-pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.summary-pill strong { color: var(--text); }
+.summary-pill.good strong { color: var(--green); }
+.summary-pill.warn strong { color: var(--yellow); }
+
+/* ===== Sections ===== */
+.section { margin-bottom: 32px; }
+.section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-muted); }
+
+/* ===== TOP BETS GRID ===== */
+.top-bets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.top-bet-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.top-bet-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.top-bet-card.stars-5::before { background: linear-gradient(90deg, #ffd700, #ff8c00); }
+.top-bet-card.stars-4::before { background: var(--green); }
+.top-bet-card.stars-3::before { background: var(--accent); }
+.top-bet-card.stars-2::before { background: var(--yellow); }
+.top-bet-card.stars-1::before { background: var(--text-muted); }
+
+.top-bet-matchup { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.top-bet-team { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.top-bet-odds { font-size: 20px; font-weight: 800; }
+.top-bet-odds.fav  { color: var(--red); }
+.top-bet-odds.dog  { color: var(--green); }
+.top-bet-odds.even { color: var(--yellow); }
+.top-bet-book { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.top-bet-metrics { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.top-bet-metric label { font-size: 10px; color: var(--text-faint); display: block; text-transform: uppercase; }
+.top-bet-metric .val { font-size: 13px; font-weight: 700; }
+.top-bet-metric .val.pos { color: var(--green); }
+.top-bet-metric .val.neg { color: var(--red); }
+.stars { color: var(--star); letter-spacing: 1px; }
+.top-bet-time { font-size: 11px; color: var(--text-faint); margin-top: 8px; }
+
+.no-odds-note {
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.no-odds-note p { margin-bottom: 8px; }
+.no-odds-note a { font-weight: 600; }
+
+/* ===== GAME CARDS ===== */
+.game-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.game-teams { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.team-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 90px;
+}
+.team-abbrev { font-size: 18px; font-weight: 800; }
+.team-name-sm { font-size: 11px; color: var(--text-muted); }
+.team-record { font-size: 11px; color: var(--text-faint); }
+.vs-sep { color: var(--text-faint); font-size: 14px; padding: 0 4px; }
+.game-meta { text-align: right; font-size: 12px; color: var(--text-muted); line-height: 1.7; }
+.game-status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.game-status-badge.live { background: #2d1f0e; color: var(--star); border: 1px solid var(--yellow); }
+.game-status-badge.preview { background: var(--bg-raised); color: var(--text-muted); }
+
+.game-body { padding: 14px 16px; }
+
+/* Pitcher matchup */
+.pitcher-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 14px;
+}
+.pitcher-block { }
+.pitcher-block.right { text-align: right; }
+.pitcher-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.pitcher-name { font-size: 13px; font-weight: 600; }
+.pitcher-stats { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
+.pitcher-block.right .pitcher-stats { justify-content: flex-end; }
+.pitcher-stat { display: flex; flex-direction: column; align-items: center; }
+.pitcher-stat .ps-label { font-size: 10px; color: var(--text-faint); }
+.pitcher-stat .ps-val { font-size: 12px; font-weight: 600; }
+.vs-pitcher { font-size: 11px; color: var(--text-faint); align-self: center; text-align: center; padding-top: 16px; }
+
+/* Probability row */
+.prob-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+}
+.prob-block { }
+.prob-block.right { text-align: right; }
+.prob-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.5px; }
+.prob-value { font-size: 22px; font-weight: 800; }
+.prob-fair-odds { font-size: 12px; color: var(--text-muted); }
+.prob-sep { text-align: center; font-size: 11px; color: var(--text-faint); }
+.prob-bar-row { margin-top: 6px; display: flex; gap: 0; border-radius: 4px; overflow: hidden; height: 6px; }
+.prob-bar-home { background: var(--accent); }
+.prob-bar-away { background: var(--text-faint); }
+
+/* Market odds row */
+.market-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+.market-block { }
+.market-block.right { text-align: right; }
+.market-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.market-best-odds { font-size: 18px; font-weight: 800; }
+.market-best-odds.fav  { color: #c9d1d9; }
+.market-best-odds.dog  { color: var(--green); }
+.market-book { font-size: 11px; color: var(--text-muted); }
+.market-implied { font-size: 11px; color: var(--text-faint); }
+.market-sep { text-align: center; font-size: 11px; color: var(--text-faint); align-self: center; }
+.market-vig { font-size: 10px; color: var(--text-faint); text-align: center; }
+
+/* EV rows */
+.ev-rows { display: flex; flex-direction: column; gap: 6px; }
+.ev-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ev-row.positive { background: var(--green-dim); border: 1px solid #1a6e1a; }
+.ev-row.negative { background: var(--bg-raised); border: 1px solid var(--border-subtle); }
+.ev-team { font-size: 13px; font-weight: 600; }
+.ev-odds  { font-size: 13px; color: var(--text-muted); }
+.ev-book  { font-size: 11px; color: var(--text-faint); }
+.ev-metrics { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.ev-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.ev-badge.positive { background: var(--green-dim); color: var(--green); border: 1px solid var(--green); }
+.ev-badge.negative { color: var(--text-faint); }
+.ev-edge { font-size: 11px; color: var(--text-muted); }
+.ev-kelly { font-size: 11px; color: var(--text-faint); }
+.ev-stars { font-size: 13px; }
+
+.no-odds-game { font-size: 12px; color: var(--text-faint); font-style: italic; }
+
+/* Team stats strip */
+.team-stats-strip {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 10px;
+}
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+}
+.stat-pill .sp-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; }
+.stat-pill .sp-val   { font-size: 13px; font-weight: 600; }
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .pitcher-row, .prob-row, .market-row { grid-template-columns: 1fr 1fr; }
+  .vs-pitcher, .prob-sep, .market-sep { display: none; }
+  .top-bets-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 420px) {
+  .top-bets-grid { grid-template-columns: 1fr; }
+}

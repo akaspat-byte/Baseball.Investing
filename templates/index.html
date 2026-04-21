@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baseball Betting Analyzer</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">⚾</span>
+        <div>
+          <h1 class="brand-title">Baseball Betting Analyzer</h1>
+          <p class="brand-sub">Advanced Stats · Live Odds · Expected Value</p>
+        </div>
+      </div>
+      <div id="header-meta" class="header-meta"></div>
+    </div>
+  </header>
+
+  <!-- ===== CONTROLS ===== -->
+  <div class="container">
+    <div class="control-bar card">
+      <div class="control-inputs">
+        <div class="input-group">
+          <label for="odds-api-key">Odds API Key</label>
+          <input
+            id="odds-api-key"
+            type="password"
+            placeholder="Paste key from the-odds-api.com (free tier: 500 req/mo)"
+            autocomplete="off"
+          />
+        </div>
+        <button id="analyze-btn" class="btn-primary" onclick="analyzeGames()">
+          Analyze Today's Games
+        </button>
+        <button class="btn-secondary" onclick="analyzeGames(true)" title="Bypass cache">
+          &#8635; Refresh
+        </button>
+      </div>
+      <p class="control-hint">
+        No odds key? You'll still see model probabilities and fair-value lines for every game.
+        <a href="https://the-odds-api.com/" target="_blank" rel="noopener">Get a free key →</a>
+      </p>
+    </div>
+
+    <!-- ===== LOADING ===== -->
+    <div id="loading" class="loading-state" style="display:none">
+      <div class="spinner"></div>
+      <p>Fetching MLB data &amp; calculating expected value…</p>
+    </div>
+
+    <!-- ===== ERROR ===== -->
+    <div id="error-panel" class="error-panel" style="display:none"></div>
+
+    <!-- ===== RESULTS ===== -->
+    <div id="results" style="display:none">
+
+      <!-- Summary bar -->
+      <div id="summary-bar" class="summary-bar"></div>
+
+      <!-- Top Bets -->
+      <section class="section">
+        <h2 class="section-title">🎯 Best Bets Today</h2>
+        <div id="top-bets-container"></div>
+      </section>
+
+      <!-- All Games -->
+      <section class="section">
+        <h2 class="section-title">📊 All Games</h2>
+        <div id="games-container"></div>
+      </section>
+
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <p>
+        For informational purposes only — not financial advice. Bet responsibly.
+        Model uses Pythagorean win%, Log5 matchup formula, and starting pitcher ERA adjustments.
+      </p>
+    </footer>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
