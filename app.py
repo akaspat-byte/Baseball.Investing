@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0  # Disable static file caching in dev
 
 _cache: dict = {}
 CACHE_TTL = 900  # 15 minutes
