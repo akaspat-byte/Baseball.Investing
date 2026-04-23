@@ -3,7 +3,7 @@ Betting model using:
   - Pythagorean Win% (Bill James, exponent 1.83) from season RS/RA
   - Bayesian regression toward .500 for small samples
   - Log5 matchup formula for head-to-head probability
-  - Starting pitcher ERA adjustment vs. implied team ERA
+  - Starting pitcher ERA adjustment (Bayesian-regressed toward league avg by IP)
   - Recent form (last 10 games) minor adjustment
   - Home field advantage (~54%)
   - Expected Value vs. best available odds
@@ -22,6 +22,9 @@ ERA_ADJ_PER_RUN = 0.025        # Win prob shift per ERA-unit above/below team av
 ERA_ADJ_CAP = 0.07             # Cap SP adjustment at ±7%
 FORM_ADJ_PER_GAME = 0.003      # Per game above/below .500 in last 10
 MIN_GS_FOR_SP_ADJ = 2          # Minimum starts before trusting SP ERA
+
+LEAGUE_AVG_ERA = 4.25          # MLB average ERA used for pitcher regression
+ERA_PRIOR_IP = 40              # Virtual innings at league average (regression weight)
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +50,28 @@ def _log5(pa: float, pb: float) -> float:
 
 def _clamp(val: float, lo: float = 0.05, hi: float = 0.95) -> float:
     return max(lo, min(hi, val))
+
+
+def _parse_ip(ip_str) -> float:
+    """Convert MLB innings-pitched string '12.1' (12 inn, 1 out) to decimal innings."""
+    try:
+        parts = str(ip_str).split('.')
+        innings = int(parts[0])
+        outs = int(parts[1]) if len(parts) > 1 else 0
+        return innings + outs / 3.0
+    except Exception:
+        return 0.0
+
+
+def _regress_era(era: float, ip_decimal: float) -> float:
+    """
+    Bayesian regression of ERA toward league average.
+    At 0 IP returns league avg; at 80+ IP is ~2/3 actual ERA.
+    Prevents early-season flukes (e.g. 0.38 ERA in 2 starts) from
+    dominating the model.
+    """
+    total = ip_decimal + ERA_PRIOR_IP
+    return (era * ip_decimal + LEAGUE_AVG_ERA * ERA_PRIOR_IP) / total
 
 
 def american_to_decimal(american: int) -> float:
@@ -144,11 +169,17 @@ class BettingModel:
         pitcher = team.get("pitcher", {})
         sp_era = pitcher.get("era")
         gs = pitcher.get("games_started", 0) or 0
+        ip_decimal = _parse_ip(pitcher.get("innings_pitched", "0"))
+
         if sp_era is None or gs < MIN_GS_FOR_SP_ADJ:
             return 0.0
+
+        # Regress ERA toward league average weighted by innings pitched
+        regressed_era = _regress_era(sp_era, ip_decimal)
+
         # Implied team ERA ≈ RA/G * 0.90
         team_era_est = team.get("ra_per_game", 4.5) * 0.90
-        era_diff = team_era_est - sp_era   # positive → SP better than team avg
+        era_diff = team_era_est - regressed_era   # positive → SP better than team avg
         return _clamp(era_diff * ERA_ADJ_PER_RUN, -ERA_ADJ_CAP, ERA_ADJ_CAP)
 
     def _form_adjustment(self, last_ten: str) -> float:
