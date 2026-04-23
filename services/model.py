@@ -360,7 +360,119 @@ class BettingModel:
             )
 
         result["bets"] = sorted(bets, key=lambda b: b["ev_pct"], reverse=True)
+        result["context"] = self._generate_context(home, away, result["model"], result["bets"], market)
         return result
+
+    # ------------------------------------------------------------------
+    # Context / insight engine
+    # ------------------------------------------------------------------
+
+    def _generate_context(self, home: dict, away: dict, model: dict, bets: list, market: dict) -> list:
+        """
+        Return a list of {type, text} insight dicts.
+        types: 'warning' | 'good' | 'info'
+        """
+        flags = []
+
+        # ── EV size check ─────────────────────────────────────────────
+        best_ev = max((b.get("ev_pct", 0) for b in bets), default=0)
+        if best_ev > 15:
+            flags.append({
+                "type": "warning",
+                "text": f"EV of {best_ev:.1f}% is unusually large — gaps this big almost always mean the model is missing context, not that you found a sure thing. Verify manually before betting.",
+            })
+        elif best_ev >= 5:
+            flags.append({
+                "type": "good",
+                "text": f"Realistic edge detected ({best_ev:.1f}% EV) — model and market have a meaningful but plausible disagreement.",
+            })
+
+        # ── Model vs market direction ──────────────────────────────────
+        if market:
+            h_implied = market.get("home_implied_prob", 0.5)
+            h_model   = model.get("home_win_prob", 0.5)
+            market_favors_home = h_implied > 0.5
+            model_favors_home  = h_model   > 0.5
+            if market_favors_home != model_favors_home:
+                mkt_fav  = home["name"] if market_favors_home else away["name"]
+                mod_fav  = home["name"] if model_favors_home  else away["name"]
+                flags.append({
+                    "type": "warning",
+                    "text": f"Model and market disagree on the winner — market favors {mkt_fav}, model favors {mod_fav}. Large disagreements on direction usually favour the market.",
+                })
+
+        # ── Pitcher analysis ───────────────────────────────────────────
+        for side, team in [("away", away), ("home", home)]:
+            pitcher = team.get("pitcher", {})
+            name    = pitcher.get("name", "TBD")
+            era     = pitcher.get("era")
+            whip    = pitcher.get("whip")
+            k9      = pitcher.get("k9")
+            gs      = pitcher.get("games_started") or 0
+            ip      = _parse_ip(pitcher.get("innings_pitched", "0"))
+            label   = "Away" if side == "away" else "Home"
+
+            if not pitcher.get("id") or name == "TBD":
+                flags.append({"type": "warning", "text": f"{label} starter is TBD — model has no pitcher adjustment for this side."})
+                continue
+
+            if gs == 0 or ip < 3:
+                flags.append({"type": "warning", "text": f"{name} has no 2025 stats yet — unknown pitcher risk, model treats them as league average."})
+                continue
+
+            if ip < 20 and era is not None:
+                regressed = _regress_era(era, ip)
+                flags.append({"type": "info", "text": f"{name}'s ERA {era:.2f} is based on only {ip:.0f} IP — model uses a regressed estimate of {regressed:.2f} to account for small sample."})
+            elif era is not None and era <= 2.20 and ip >= 20:
+                flags.append({"type": "good", "text": f"{name} is elite — {era:.2f} ERA across {ip:.0f} IP is genuinely dominant, not a small-sample fluke."})
+            elif era is not None and era >= 5.50:
+                flags.append({"type": "warning", "text": f"{name} is struggling — {era:.2f} ERA is well above the league average of {LEAGUE_AVG_ERA}."})
+
+            if whip is not None and whip <= 1.00 and gs >= 2:
+                flags.append({"type": "good", "text": f"{name}'s WHIP of {whip:.2f} is elite — almost no baserunners, ERA likely to stay low."})
+            elif whip is not None and whip >= 1.60 and gs >= 2:
+                flags.append({"type": "warning", "text": f"{name}'s WHIP of {whip:.2f} is high — giving up a lot of baserunners despite his ERA."})
+
+            if k9 is not None and k9 >= 10.0 and gs >= 2:
+                flags.append({"type": "good", "text": f"{name} is a strikeout pitcher — {k9:.1f} K/9 limits balls in play and reduces variance."})
+
+        # ── Recent form ────────────────────────────────────────────────
+        for team in [away, home]:
+            lt = team.get("last_ten", "")
+            try:
+                w = int(lt.split("-")[0])
+                if w >= 8:
+                    flags.append({"type": "good",    "text": f"{team['name']} is red hot — {lt} over their last 10 games."})
+                elif w <= 2:
+                    flags.append({"type": "warning", "text": f"{team['name']} is ice cold — only {lt} over their last 10 games."})
+            except Exception:
+                pass
+
+        # ── Record disparity ───────────────────────────────────────────
+        h_wp = home.get("win_pct", 0.5)
+        a_wp = away.get("win_pct", 0.5)
+        if abs(h_wp - a_wp) >= 0.15:
+            better = home if h_wp > a_wp else away
+            worse  = away if h_wp > a_wp else home
+            flags.append({
+                "type": "info",
+                "text": f"Clear talent gap — {better['name']} ({better['wins']}-{better['losses']}) vs {worse['name']} ({worse['wins']}-{worse['losses']}).",
+            })
+
+        # ── Streak ────────────────────────────────────────────────────
+        for team in [away, home]:
+            streak = team.get("streak", "")
+            try:
+                kind   = "W" if streak[0] == "W" else "L"
+                length = int(streak[1:])
+                if kind == "W" and length >= 5:
+                    flags.append({"type": "good",    "text": f"{team['name']} has won {length} straight."})
+                elif kind == "L" and length >= 5:
+                    flags.append({"type": "warning", "text": f"{team['name']} has lost {length} straight."})
+            except Exception:
+                pass
+
+        return flags
 
     def get_top_bets(self, analyzed_games: list, min_ev_pct: float = 1.0) -> list:
         top = []

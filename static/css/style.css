@@ -377,6 +377,22 @@ a:hover { text-decoration: underline; }
 .stat-pill .sp-label { font-size: 10px; color: var(--text-faint); text-transform: uppercase; }
 .stat-pill .sp-val   { font-size: 13px; font-weight: 600; }
 
+/* ===== Context flags ===== */
+.context-flags { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; border-top: 1px solid var(--border-subtle); padding-top: 12px; }
+.context-flag {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+}
+.context-flag .flag-icon { flex-shrink: 0; font-size: 13px; }
+.context-flag.warning { background: #2d1a0a; border: 1px solid #6e3b0a; color: #e8a44a; }
+.context-flag.good    { background: var(--green-dim); border: 1px solid #1f5e22; color: #7ee085; }
+.context-flag.info    { background: #0d1f38; border: 1px solid #1a3a5c; color: #79c0ff; }
+
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
   .pitcher-row, .prob-row, .market-row { grid-template-columns: 1fr 1fr; }

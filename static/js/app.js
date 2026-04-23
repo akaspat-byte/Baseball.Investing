@@ -255,6 +255,7 @@ function renderGameCard(game, oddsAvailable) {
 
       <!-- Team stats strip -->
       ${renderTeamStats(away, home)}
+      ${renderContextFlags(game.context)}
     </div>
   </div>`;
 }
@@ -355,6 +356,18 @@ function renderTeamStats(away, home) {
     ${statPill(home.abbreviation + ' RA/G', home.ra_per_game)}
     ${statPill(home.abbreviation + ' RS/G', home.rs_per_game)}
   </div>`;
+}
+
+function renderContextFlags(flags) {
+  if (!flags || flags.length === 0) return '';
+  const icons = { warning: '⚠️', good: '✅', info: 'ℹ️' };
+  const items = flags.map(f =>
+    `<div class="context-flag ${escHtml(f.type)}">
+      <span class="flag-icon">${icons[f.type] || 'ℹ️'}</span>
+      <span>${escHtml(f.text)}</span>
+    </div>`
+  ).join('');
+  return `<div class="context-flags">${items}</div>`;
 }
 
 function statPill(label, val) {
