@@ -276,6 +276,7 @@ class BettingModel:
     def analyze_game(self, game: dict, odds_data=None) -> dict:
         home = game["home"]
         away = game["away"]
+        is_live = game.get("status") == "Live"
 
         home_prob, away_prob, breakdown = self.calculate_win_probability(home, away)
 
@@ -295,7 +296,13 @@ class BettingModel:
             "market": None,
             "bets": [],
             "odds_matched": False,
+            "is_live": is_live,
         }
+
+        # Never compare pre-game model probabilities against live in-game odds —
+        # live lines reflect current score/situation, not pre-game fair value.
+        if is_live or not odds_data:
+            return result
 
         odds_game = self._find_odds_game(game, odds_data)
         if not odds_game:

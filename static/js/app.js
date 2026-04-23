@@ -268,6 +268,7 @@ function renderMarketRow(market, away, home) {
 }
 
 function renderEvSection(game, oddsAvailable) {
+  if (game.is_live) return `<p class="no-odds-game">⚡ Game in progress — pre-game model shown for reference only. Live odds excluded to avoid false EV signals.</p>`;
   if (!oddsAvailable) return `<p class="no-odds-game">Add Odds API key to see expected value analysis.</p>`;
   if (!game.odds_matched) return `<p class="no-odds-game">No odds found for this game.</p>`;
 
