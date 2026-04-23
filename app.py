@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from datetime import date, datetime
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
@@ -15,14 +16,12 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Simple in-memory cache (keyed by date + api_key presence)
 _cache: dict = {}
 CACHE_TTL = 900  # 15 minutes
 
 
-def _cache_key(has_key: bool) -> str:
-    from datetime import date
-    return f"{date.today().isoformat()}_{has_key}"
+def _cache_key(game_date: str, has_key: bool) -> str:
+    return f"{game_date}_{has_key}"
 
 
 def _cached_result(key: str):
@@ -34,6 +33,15 @@ def _cached_result(key: str):
 
 def _store_result(key: str, data: dict):
     _cache[key] = {"data": data, "ts": time.time()}
+
+
+def _validate_date(date_str: str) -> str:
+    """Return date_str if valid YYYY-MM-DD, otherwise today."""
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return date_str
+    except (ValueError, TypeError):
+        return date.today().strftime("%Y-%m-%d")
 
 
 # ---------------------------------------------------------------------------
@@ -54,22 +62,24 @@ def health():
 def analyze():
     """
     Query params:
-        key  — Odds API key (optional; falls back to ODDS_API_KEY env var)
-        fresh — if "1", bypass cache
+        key   — DraftKings Odds API key (optional; falls back to ODDS_API_KEY env var)
+        date  — YYYY-MM-DD (optional; defaults to today)
+        fresh — "1" to bypass cache
     """
-    odds_key = request.args.get("key", "").strip() or os.getenv("ODDS_API_KEY", "")
+    odds_key   = request.args.get("key", "").strip() or os.getenv("ODDS_API_KEY", "")
+    game_date  = _validate_date(request.args.get("date", ""))
     force_fresh = request.args.get("fresh") == "1"
 
-    cache_key = _cache_key(bool(odds_key))
+    cache_key = _cache_key(game_date, bool(odds_key))
     if not force_fresh:
         cached = _cached_result(cache_key)
         if cached:
-            logger.info("Returning cached analysis")
+            logger.info(f"Cache hit for {cache_key}")
             return jsonify({**cached, "cached": True})
 
     try:
         mlb = MLBApiService()
-        games_data = mlb.get_todays_games_with_stats()
+        games_data = mlb.get_todays_games_with_stats(game_date=game_date)
 
         odds_data = None
         odds_error = None
@@ -77,7 +87,7 @@ def analyze():
 
         if odds_key:
             svc = OddsApiService(odds_key)
-            odds_data, odds_error = svc.get_mlb_odds()
+            odds_data, odds_error = svc.get_mlb_odds(game_date=game_date)
             requests_remaining = svc.requests_remaining
 
         model = BettingModel()

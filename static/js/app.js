@@ -6,12 +6,55 @@
 const LS_KEY = 'bbAnalyzer_oddsApiKey';
 let lastData = null;
 
+// Date offset from today (0 = today, 1 = tomorrow, -1 = yesterday)
+let dateOffset = 0;
+
+function _offsetDate(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function _friendlyDate(iso) {
+  const [y, m, day] = iso.split('-');
+  const d = new Date(+y, +m - 1, +day);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(+y, +m - 1, +day);
+  const diff = Math.round((target - today) / 86400000);
+  const label = diff === 0 ? ' (Today)' : diff === 1 ? ' (Tomorrow)' : diff === -1 ? ' (Yesterday)' : '';
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + label;
+}
+
+function shiftDate(delta) {
+  dateOffset += delta;
+  updateDateDisplay();
+  analyzeGames();
+}
+
+function goToday() {
+  dateOffset = 0;
+  updateDateDisplay();
+  analyzeGames();
+}
+
+function goTomorrow() {
+  dateOffset = 1;
+  updateDateDisplay();
+  analyzeGames();
+}
+
+function updateDateDisplay() {
+  const iso = _offsetDate(dateOffset);
+  document.getElementById('date-display').textContent = _friendlyDate(iso);
+}
+
 // ---------------------------------------------------------------------------
 // Bootstrap
 // ---------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem(LS_KEY) || '';
   if (saved) document.getElementById('odds-api-key').value = saved;
+  updateDateDisplay();
   analyzeGames();
 });
 
@@ -27,8 +70,12 @@ async function analyzeGames(forceFresh = false) {
   clearError();
   document.getElementById('results').style.display = 'none';
 
+  const gameDate = _offsetDate(dateOffset);
+  updateDateDisplay();
+
   const params = new URLSearchParams();
   if (key) params.set('key', key);
+  params.set('date', gameDate);
   if (forceFresh) params.set('fresh', '1');
 
   try {
@@ -59,10 +106,10 @@ function renderResults(data) {
 
 function renderHeaderMeta(data) {
   const el = document.getElementById('header-meta');
-  const lines = [`<strong>${formatDate(data.date)}</strong>`];
+  const lines = [];
   if (data.cached) lines.push('Cached result');
   if (data.requests_remaining != null)
-    lines.push(`API: <strong>${data.requests_remaining}</strong> requests remaining`);
+    lines.push(`DraftKings API: <strong>${data.requests_remaining}</strong> requests left`);
   el.innerHTML = lines.join('<br>');
 }
 

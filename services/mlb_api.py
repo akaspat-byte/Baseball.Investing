@@ -124,11 +124,12 @@ class MLBApiService:
     # Main enriched schedule
     # -------------------------------------------------------------------------
 
-    def get_todays_games_with_stats(self):
-        today = date.today().strftime("%Y-%m-%d")
-        season = date.today().year
+    def get_todays_games_with_stats(self, game_date=None):
+        if game_date is None:
+            game_date = date.today().strftime("%Y-%m-%d")
+        season = int(game_date.split("-")[0])
 
-        games = self.get_schedule()
+        games = self.get_schedule(game_date)
         standings = self.get_standings(season)
 
         # Collect unique pitcher IDs
@@ -185,7 +186,7 @@ class MLBApiService:
                 }
             )
 
-        return {"date": today, "season": season, "games": enriched}
+        return {"date": game_date, "season": season, "games": enriched}
 
     # -------------------------------------------------------------------------
     # Helpers

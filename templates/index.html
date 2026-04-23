@@ -27,7 +27,7 @@
     <div class="control-bar card">
       <div class="control-inputs">
         <div class="input-group">
-          <label for="odds-api-key">Odds API Key</label>
+          <label for="odds-api-key">DraftKings Odds API Key</label>
           <input
             id="odds-api-key"
             type="password"
@@ -36,14 +36,24 @@
           />
         </div>
         <button id="analyze-btn" class="btn-primary" onclick="analyzeGames()">
-          Analyze Today's Games
+          Analyze Games
         </button>
         <button class="btn-secondary" onclick="analyzeGames(true)" title="Bypass cache">
           &#8635; Refresh
         </button>
       </div>
+
+      <!-- Date navigation -->
+      <div class="date-nav">
+        <button class="btn-date" onclick="shiftDate(-1)">&#8592; Prev</button>
+        <button class="btn-date btn-date-today" onclick="goToday()">Today</button>
+        <span id="date-display" class="date-label">—</span>
+        <button class="btn-date btn-date-today" onclick="goTomorrow()">Tomorrow</button>
+        <button class="btn-date" onclick="shiftDate(1)">Next &#8594;</button>
+      </div>
+
       <p class="control-hint">
-        No odds key? You'll still see model probabilities and fair-value lines for every game.
+        Odds shown are DraftKings only. No key? You'll still see model probabilities and fair-value lines.
         <a href="https://the-odds-api.com/" target="_blank" rel="noopener">Get a free key →</a>
       </p>
     </div>

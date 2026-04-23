@@ -1,6 +1,7 @@
 import requests
 import os
 import logging
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
@@ -12,21 +13,29 @@ class OddsApiService:
         self.requests_remaining = None
         self.requests_used = None
 
-    def get_mlb_odds(self):
-        """Fetch MLB moneyline (h2h) odds. Returns (data, error_msg)."""
+    def get_mlb_odds(self, game_date=None):
+        """Fetch MLB moneyline odds from DraftKings only. Returns (data, error_msg)."""
         if not self.api_key:
             return None, "No API key provided"
+
+        params = {
+            "apiKey": self.api_key,
+            "bookmakers": "draftkings",   # DraftKings only; mutually exclusive with regions
+            "markets": "h2h",
+            "oddsFormat": "american",
+            "dateFormat": "iso",
+        }
+
+        # Filter to only games on the requested date (using UTC window covering ET day)
+        if game_date:
+            dt = datetime.strptime(game_date, "%Y-%m-%d")
+            params["commenceTimeFrom"] = dt.strftime("%Y-%m-%dT11:00:00Z")       # 7am ET
+            params["commenceTimeTo"]   = (dt + timedelta(days=1)).strftime("%Y-%m-%dT06:00:00Z")  # 2am ET next day
 
         try:
             resp = requests.get(
                 f"{ODDS_API_BASE}/sports/baseball_mlb/odds/",
-                params={
-                    "apiKey": self.api_key,
-                    "regions": "us",
-                    "markets": "h2h",
-                    "oddsFormat": "american",
-                    "dateFormat": "iso",
-                },
+                params=params,
                 timeout=15,
             )
 
